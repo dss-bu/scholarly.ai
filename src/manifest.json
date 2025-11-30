@@ -3,9 +3,7 @@
   "name": "Scholarly",
   "version": "1.0.0",
   "description": "Offline-first YouTube study companion",
-  "action": {
-    "default_popup": "index.html"
-  },
+  "action": {},
   "background": {
     "service_worker": "src/background.ts",
     "type": "module"
@@ -13,7 +11,12 @@
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/*"],
-      "js": ["src/content.ts"]
+      "js": ["src/content.tsx"]
+    },
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["src/inject.ts"],
+      "world": "MAIN"
     }
   ],
   "permissions": ["storage", "activeTab", "scripting"],
