@@ -34,6 +34,10 @@ Pull requests are the best way to propose changes to the codebase (we use [Githu
 5.  Make sure your code lints.
 6.  Issue that pull request!
 
+## Submitting Changes
+
+For a detailed step-by-step guide on how to submit your changes (including how our Git hooks work), please read our [Submission Guide](docs/submission.md).
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under its MIT License.
