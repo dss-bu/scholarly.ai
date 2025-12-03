@@ -18,27 +18,27 @@ Unlike many extensions that rely heavily on cloud APIs for every interaction, Sc
 
 - **Role**: Injected into YouTube pages.
 - **Responsibilities**:
-  - Capturing video frames (snapshots).
-  - Reading video metadata (timestamps, title).
-  - Rendering the overlay UI for taking notes and asking questions.
-  - Communicating with the background service worker.
+    - Capturing video frames (snapshots).
+    - Reading video metadata (timestamps, title).
+    - Rendering the overlay UI for taking notes and asking questions.
+    - Communicating with the background service worker.
 
 ### 2. Background Service Worker
 
 - **Role**: The central coordinator.
 - **Responsibilities**:
-  - Managing state (current session notes).
-  - Handling PDF generation logic.
-  - Orchestrating the "Offline AI" models (e.g., using Chrome's built-in AI APIs or WASM-based models).
-  - Managing storage (IndexedDB/Chrome Storage).
+    - Managing state (current session notes).
+    - Handling PDF generation logic.
+    - Orchestrating the "Offline AI" models (e.g., using Chrome's built-in AI APIs or WASM-based models).
+    - Managing storage (IndexedDB/Chrome Storage).
 
 ### 3. Popup / Side Panel
 
 - **Role**: The main user interface for reviewing notes and settings.
 - **Responsibilities**:
-  - Displaying the list of captured snapshots.
-  - Providing the "Export to PDF" functionality.
-  - Chat interface for the AI tutor.
+    - Displaying the list of captured snapshots.
+    - Providing the "Export to PDF" functionality.
+    - Chat interface for the AI tutor.
 
 ## Process Flow
 
@@ -76,8 +76,8 @@ Scholarly.ai implements a **Model Abstraction Layer (MAL)** to decouple the appl
 
 - **Abstraction**: Custom `AIProvider` interface.
 - **Providers**:
-  - **Chrome Built-in AI APIs** (Language Detection, Translation, Prompt, Summarization).
-  - **LangChain.js** (optional) for unified interface across external providers.
+    - **Chrome Built-in AI APIs** (Language Detection, Translation, Prompt, Summarization).
+    - **LangChain.js** (optional) for unified interface across external providers.
 
 ### Storage & Data
 

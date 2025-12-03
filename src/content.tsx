@@ -1,293 +1,221 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App";
-import styles from "./index.css?inline";
+import React from 'react';
+import { createRoot } from 'react-dom/client';
 
-const SIDEBAR_HOST_ID = "scholarly-sidebar-host";
-let root: ReactDOM.Root | null = null;
-let observer: MutationObserver | null = null;
-let resizeTimeout: number | null = null;
+const SIDEBAR_WIDTH = 500;
+const SIDEBAR_ID = 'scholarly-extension-sidebar';
 
-// Semantic class names
-const CLASSES = {
-    ROOT: "scholarly-layout-root",
-    BODY: "scholarly-layout-body",
-    APP: "scholarly-layout-app",
-    HEADER: "scholarly-layout-header",
-    PLAYER_OUTER: "scholarly-layout-player-outer",
-    PLAYER_INNER: "scholarly-layout-player-inner",
-    VIDEO: "scholarly-layout-video",
-    CONTROLS: "scholarly-layout-controls",
-    FULLSCREEN_PLAYER: "scholarly-layout-fullscreen-player",
-    FULLSCREEN_CONTAINER: "scholarly-layout-fullscreen-container",
+const Sidebar: React.FC = () => {
+    const handleClose = () => {
+        removeSidebar();
+    };
+
+    return (
+        <div
+            style={{
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#0f0f0f',
+                borderLeft: '1px solid #3f3f3f',
+                boxShadow: '-2px 0 8px rgba(0,0,0,0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                fontFamily: 'Roboto, Arial, sans-serif',
+                color: '#ffffff',
+            }}
+        >
+            {/* Header */}
+            <div
+                style={{
+                    padding: '16px',
+                    borderBottom: '1px solid #3f3f3f',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                }}
+            >
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 500 }}>
+                    Scholarly.AI
+                </h3>
+                <button
+                    onClick={handleClose}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '16px',
+                        cursor: 'pointer',
+                        padding: '4px 8px',
+                        color: '#ffffff',
+                        borderRadius: '4px',
+                    }}
+                    onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = '#3f3f3f')
+                    }
+                    onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = 'transparent')
+                    }
+                >
+                    &#129122;
+                </button>
+            </div>
+
+            {/* Content */}
+            <div
+                style={{
+                    flex: 1,
+                    padding: '16px',
+                    overflowY: 'auto',
+                }}
+            >
+                <p>Your everyday study companion for YouTube</p>
+            </div>
+        </div>
+    );
 };
 
-// CSS Variables for configuration
-const CSS_VARS = `
-  :root {
-    --scholarly-width: 65vw;
-    --scholarly-sidebar-width: 35vw;
-  }
-`;
+// Function to push YouTube content to the left
+const adjustPageLayout = () => {
+    // Main page container
+    const ytdApp = document.querySelector('ytd-app') as HTMLElement;
+    if (ytdApp) {
+        ytdApp.style.marginRight = `${SIDEBAR_WIDTH}px`;
+        ytdApp.style.transition = 'margin-right 0.3s ease';
+    }
 
-// Resilient Global CSS using semantic classes
-const GLOBAL_LAYOUT_CSS = `
-  ${CSS_VARS}
+    // YouTube's masthead (top header with search bar)
+    const masthead = document.querySelector(
+        '#masthead-container',
+    ) as HTMLElement;
+    if (masthead) {
+        masthead.style.width = `calc(100% - ${SIDEBAR_WIDTH}px)`;
+        masthead.style.transition = 'width 0.3s ease';
+    }
 
-  html[scholarly-active] {
-    width: var(--scholarly-width) !important;
-    overflow-x: hidden !important;
-  }
-  
-  html[scholarly-active] body {
-    width: var(--scholarly-width) !important;
-    overflow-x: hidden !important;
-  }
+    // YouTube's player (when watching videos)
+    const player = document.querySelector('#movie_player') as HTMLElement;
+    if (player) {
+        player.style.maxWidth = `calc(100vw - ${SIDEBAR_WIDTH}px)`;
+    }
 
-  html[scholarly-active] .${CLASSES.APP} {
-    width: var(--scholarly-width) !important;
-    max-width: var(--scholarly-width) !important;
-  }
-  
-  /* Handle YouTube's fixed header */
-  html[scholarly-active] .${CLASSES.HEADER} {
-    width: var(--scholarly-width) !important;
-    right: auto !important;
-    left: 0 !important;
-  }
+    // Theater mode container
+    const playerContainer = document.querySelector(
+        '#player-container-outer',
+    ) as HTMLElement;
+    if (playerContainer) {
+        playerContainer.style.maxWidth = `calc(100vw - ${SIDEBAR_WIDTH}px)`;
+    }
 
-  /* Force video player to respect container width */
-  html[scholarly-active] .${CLASSES.PLAYER_OUTER} {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
+    // Full-screen elements overlay
+    const fullscreenContainer = document.querySelector(
+        '.html5-video-container',
+    ) as HTMLElement;
+    if (fullscreenContainer) {
+        fullscreenContainer.style.maxWidth = `calc(100vw - ${SIDEBAR_WIDTH}px)`;
+    }
+};
 
-  /* Fix inner video element resizing */
-  html[scholarly-active] .${CLASSES.PLAYER_INNER},
-  html[scholarly-active] .${CLASSES.VIDEO} {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100% !important;
-  }
-  
-  /* Reset video positioning if needed */
-  html[scholarly-active] video.${CLASSES.VIDEO} {
-    left: 0 !important;
-    top: 0 !important;
-    object-fit: contain !important;
-  }
+// Function to restore YouTube layout
+const restorePageLayout = () => {
+    const ytdApp = document.querySelector('ytd-app') as HTMLElement;
+    if (ytdApp) {
+        ytdApp.style.marginRight = '0';
+    }
 
-  /* Fix player controls clipping */
-  html[scholarly-active] .${CLASSES.CONTROLS} {
-    width: 100% !important;
-    left: 0 !important;
-  }
-  
-  html[scholarly-active] .ytp-chrome-controls {
-    width: 100% !important;
-  }
-  
-  html[scholarly-active] .ytp-right-controls {
-    right: 0 !important;
-  }
+    const masthead = document.querySelector(
+        '#masthead-container',
+    ) as HTMLElement;
+    if (masthead) {
+        masthead.style.width = '';
+    }
 
-  /* Fix fullscreen video alignment */
-  html[scholarly-active] .${CLASSES.FULLSCREEN_PLAYER} video {
-    height: 100% !important;
-    max-height: 100% !important;
-  }
-  
-  /* Fix fullscreen video disappearing (container height collapse) */
-  html[scholarly-active] .${CLASSES.FULLSCREEN_CONTAINER} {
-    height: 100% !important;
-  }
-`;
+    const player = document.querySelector('#movie_player') as HTMLElement;
+    if (player) {
+        player.style.maxWidth = '';
+    }
 
-function injectGlobalStyles() {
-    if (document.getElementById("scholarly-global-styles")) return;
-    const style = document.createElement("style");
-    style.id = "scholarly-global-styles";
-    style.textContent = GLOBAL_LAYOUT_CSS;
-    document.head.appendChild(style);
-}
+    const playerContainer = document.querySelector(
+        '#player-container-outer',
+    ) as HTMLElement;
+    if (playerContainer) {
+        playerContainer.style.maxWidth = '';
+    }
 
-// Heuristics to find elements
-function tagElements() {
-    // App Root
-    const app = document.querySelector("ytd-app");
-    if (app) app.classList.add(CLASSES.APP);
+    const fullscreenContainer = document.querySelector(
+        '.html5-video-container',
+    ) as HTMLElement;
+    if (fullscreenContainer) {
+        fullscreenContainer.style.maxWidth = '';
+    }
+};
 
-    // Header
-    const header =
-        document.querySelector("#masthead-container") ||
-        document.querySelector("ytd-masthead");
-    if (header) header.classList.add(CLASSES.HEADER);
+// Function to inject sidebar
+const injectSidebar = () => {
+    // Check if sidebar already exists
+    if (document.getElementById(SIDEBAR_ID)) {
+        return;
+    }
 
-    // Player Outer
-    const playerOuter =
-        document.querySelector("ytd-watch-flexy") ||
-        document.querySelector("#player-container-outer");
-    if (playerOuter) playerOuter.classList.add(CLASSES.PLAYER_OUTER);
+    // Create sidebar container
+    const sidebarContainer = document.createElement('div');
+    sidebarContainer.id = SIDEBAR_ID;
+    sidebarContainer.style.cssText = `
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: ${SIDEBAR_WIDTH}px;
+    height: 100vh;
+    z-index: 2147483647;
+    overflow: hidden;
+  `;
 
-    // Player Inner / Video Containers
-    const playerInner =
-        document.querySelector("#player-container-inner") ||
-        document.querySelector("#player-container");
-    if (playerInner) playerInner.classList.add(CLASSES.PLAYER_INNER);
+    document.body.appendChild(sidebarContainer);
 
-    // Video Elements
-    const videos = document.querySelectorAll("video");
-    videos.forEach((v) => v.classList.add(CLASSES.VIDEO));
+    // Render React component
+    const root = createRoot(sidebarContainer);
+    root.render(<Sidebar />);
 
-    const videoContainers = document.querySelectorAll(".html5-video-container");
-    videoContainers.forEach((vc) => vc.classList.add(CLASSES.VIDEO)); // Treat container as video for sizing
+    // Adjust page layout
+    adjustPageLayout();
+};
 
-    // Controls
-    const controls = document.querySelector(".ytp-chrome-bottom");
-    if (controls) controls.classList.add(CLASSES.CONTROLS);
+// Function to remove sidebar
+const removeSidebar = () => {
+    const sidebar = document.getElementById(SIDEBAR_ID);
+    if (sidebar) {
+        sidebar.remove();
+        restorePageLayout();
+    }
+};
 
-    // Fullscreen
-    const fsPlayer = document.querySelector(
-        ".html5-video-player.ytp-fullscreen"
-    );
-    if (fsPlayer) fsPlayer.classList.add(CLASSES.FULLSCREEN_PLAYER);
-
-    const fsContainer = document.querySelector(
-        ".html5-video-player.ytp-fullscreen .html5-video-container"
-    );
-    if (fsContainer) fsContainer.classList.add(CLASSES.FULLSCREEN_CONTAINER);
-}
-
-function startObserver() {
-    if (observer) return;
-
-    // Initial tag
-    tagElements();
-
-    observer = new MutationObserver((mutations) => {
-        // Quick early exit: if any childList change happened, we want to retag.
-        // If only attribute changes happened, only retag when it's a relevant attribute on a relevant element.
-        let shouldRetag = false;
-
-        for (const m of mutations) {
-            if (
-                m.type === "childList" &&
-                (m.addedNodes.length || m.removedNodes.length)
-            ) {
-                shouldRetag = true;
-                break;
-            }
-            if (m.type === "attributes") {
-                const attr = m.attributeName;
-                // Only react to attribute changes we care about:
-                if (
-                    attr === "class" ||
-                    attr === "style" ||
-                    attr === "hidden" ||
-                    attr === "aria-hidden"
-                ) {
-                    shouldRetag = true;
-                    break;
-                }
-            }
+// Listen for messages from background script
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message.type === 'TOGGLE_SIDEBAR') {
+        const exists = document.getElementById(SIDEBAR_ID);
+        if (exists) {
+            removeSidebar();
+        } else {
+            injectSidebar();
         }
-
-        if (!shouldRetag) return;
-
-        // Debounce the tagging
-        if (resizeTimeout) window.clearTimeout(resizeTimeout);
-        resizeTimeout = window.setTimeout(() => {
-            tagElements();
-        }, 100);
-    });
-
-    // Observe body but only watch for specific attribute names to reduce noise.
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ["class", "style", "hidden", "aria-hidden"],
-        // attributeOldValue: true // optional if you need previous value
-    });
-}
-
-function stopObserver() {
-    if (observer) {
-        observer.disconnect();
-        observer = null;
+        sendResponse({ success: true });
     }
-}
-
-function injectSidebar() {
-    if (document.getElementById(SIDEBAR_HOST_ID)) return;
-
-    // Create host element
-    const host = document.createElement("div");
-    host.id = SIDEBAR_HOST_ID;
-    host.style.position = "fixed";
-    host.style.top = "0";
-    host.style.right = "0";
-    host.style.width = "var(--scholarly-sidebar-width)";
-    host.style.height = "100vh";
-    host.style.zIndex = "2147483647";
-    host.style.backgroundColor = "white";
-    host.style.boxShadow = "-2px 0 5px rgba(0, 0, 0, 0.1)";
-    document.body.appendChild(host);
-
-    // Create shadow root
-    const shadow = host.attachShadow({ mode: "open" });
-
-    // Inject styles
-    const styleElement = document.createElement("style");
-    styleElement.textContent = styles;
-    shadow.appendChild(styleElement);
-
-    // Render App
-    root = ReactDOM.createRoot(shadow);
-    root.render(
-        <React.StrictMode>
-            <App />
-        </React.StrictMode>
-    );
-}
-
-function removeSidebar() {
-    const host = document.getElementById(SIDEBAR_HOST_ID);
-    if (host && root) {
-        root.unmount();
-        host.remove();
-        root = null;
-    }
-}
-
-function toggleSidebar() {
-    injectGlobalStyles();
-
-    const isActive = document.documentElement.hasAttribute("scholarly-active");
-
-    if (isActive) {
-        // Deactivate
-        document.documentElement.removeAttribute("scholarly-active");
-        removeSidebar();
-        stopObserver();
-        window.dispatchEvent(
-            new CustomEvent("SCHOLARLY_TOGGLE", { detail: { active: false } })
-        );
-    } else {
-        // Activate
-        document.documentElement.setAttribute("scholarly-active", "");
-        injectSidebar();
-        startObserver();
-        window.dispatchEvent(
-            new CustomEvent("SCHOLARLY_TOGGLE", { detail: { active: true } })
-        );
-    }
-}
-
-// Listen for messages
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-    if (request.action === "TOGGLE_SIDEBAR") {
-        toggleSidebar();
-    }
-    sendResponse({ status: "received" });
+    return true;
 });
+
+// Handle YouTube's SPA navigation (page changes without reload)
+let previousUrl = '';
+const observer = new MutationObserver(() => {
+    if (location.href !== previousUrl) {
+        previousUrl = location.href;
+        // Re-adjust layout if sidebar is open
+        if (document.getElementById(SIDEBAR_ID)) {
+            adjustPageLayout();
+        }
+    }
+});
+
+// Start observing YouTube's page changes
+observer.observe(document.body, { childList: true, subtree: true });
+
+// Optional: Auto-inject on video pages only
+// if (window.location.pathname === '/watch') {
+//   injectSidebar();
+// }

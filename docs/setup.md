@@ -16,15 +16,15 @@ Welcome to the Scholarly project! This guide will help you set up your developme
 
 3. **Clone the repository**:
 
-   ```bash
-   git clone https://github.com/yourusername/scholarly.ai.git
-   cd scholarly.ai
-   ```
+    ```bash
+    git clone https://github.com/yourusername/scholarly.ai.git
+    cd scholarly.ai
+    ```
 
 4. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm install
+    ```
 
 ## Development Workflow
 

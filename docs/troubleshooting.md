@@ -16,17 +16,17 @@ This document lists common issues you might encounter during development and how
 **Solution**:
 
 - Ensure `vite.config.ts` is configured to force IPv4:
-  ```ts
-  server: {
-    host: '127.0.0.1',
-    port: 5173,
-    strictPort: true,
-    hmr: {
+    ```ts
+    server: {
       host: '127.0.0.1',
-      clientPort: 5173,
-    },
-  }
-  ```
+      port: 5173,
+      strictPort: true,
+      hmr: {
+        host: '127.0.0.1',
+        clientPort: 5173,
+      },
+    }
+    ```
 - Restart the dev server: `npm run dev`.
 - Reload the extension in `chrome://extensions`.
 
@@ -40,12 +40,12 @@ The Chrome Extension (running on `chrome-extension://...`) is trying to fetch re
 **Solution**:
 
 - Ensure `vite.config.ts` has CORS enabled for all origins:
-  ```ts
-  server: {
-    cors: { origin: "*" },
-    // ...
-  }
-  ```
+    ```ts
+    server: {
+      cors: { origin: "*" },
+      // ...
+    }
+    ```
 
 ## Runtime Errors
 
