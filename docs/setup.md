@@ -16,15 +16,16 @@ Welcome to the Scholarly project! This guide will help you set up your developme
 
 3. **Clone the repository**:
 
-    ```bash
-    git clone https://github.com/yourusername/scholarly.ai.git
-    cd scholarly.ai
-    ```
+   ```bash
+   git clone https://github.com/yourusername/scholarly.ai.git
+   cd scholarly.ai
+   ```
 
 4. **Install dependencies**:
-    ```bash
-    npm install
-    ```
+   ```bash
+   cd ./frontend
+   npm install
+   ```
 
 ## Development Workflow
 
@@ -37,10 +38,12 @@ We use **Vite** with **HMR (Hot Module Replacement)** for a fast development exp
     ```
 
     This command will:
+
     - Start a local server at `http://127.0.0.1:5173`
     - Watch for file changes and rebuild the extension automatically.
 
 2.  **Load the Extension in Chrome**:
+
     - Open Chrome and navigate to `chrome://extensions`.
     - Enable **Developer mode** (toggle in the top right).
     - Click **Load unpacked**.
